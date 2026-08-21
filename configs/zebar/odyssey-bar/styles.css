@@ -1,12 +1,5 @@
 @import 'https://www.nerdfonts.com/assets/css/webfont.css';
 
-@font-face {
-  font-family: 'JetBrainsMono Nerd Font';
-  src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@latest/fonts/webfonts/JetBrainsMono-Regular.woff2') format('woff2');
-  font-weight: normal;
-  font-style: normal;
-}
-
 :root {
   --bg: #000000;
   --surface: var(--wallpaper-primary, #5b3f9e);

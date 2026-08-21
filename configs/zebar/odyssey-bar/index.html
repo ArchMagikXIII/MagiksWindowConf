@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css" href="./styles.css" />
     <link rel="stylesheet" type="text/css" href="./wallpaper-colors.css" />
+    <script src="./gpu-info.js"></script>
     <script
       src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"
       integrity="sha256-aS0B0wnsaDByLfE16h4MDCP1fQFccysd1YWOcV+gbBo="
@@ -38,11 +39,11 @@
         }, []);
 
         const workspaceIcons = {
-          '1': '\u{f1ff}',
-          '2': '\u{f0174}',
-          '3': '\u{f268}',
-          '4': '\u{ea85}',
-          '5': '\u{f1b7}',
+          '1': <i className="nf nf-md-console"></i>,
+          '2': <i className="nf nf-md-monitor"></i>,
+          '3': <i className="nf nf-md-folder"></i>,
+          '4': <i className="nf nf-md-application"></i>,
+          '5': <i className="nf nf-md-email"></i>,
         };
 
         function getNetworkIcon() {
@@ -76,6 +77,24 @@
           if (pct > 40) return <i className="nf nf-md-battery_50"></i>;
           if (pct > 20) return <i className="nf nf-md-battery_30"></i>;
           return <i className="nf nf-md-battery_10"></i>;
+        }
+
+        function getGpuNames() {
+          const gpus = window.__GPU_LIST__;
+          if (!gpus || gpus.length === 0) return ['GPU'];
+          return gpus;
+        }
+
+        function getPrimaryGpu() {
+          const gpus = getGpuNames();
+          return gpus[gpus.length - 1] || 'GPU';
+        }
+
+        function getGpuClickCmd() {
+          const gpu = getPrimaryGpu().toLowerCase();
+          if (gpu.includes('nvidia')) return 'shell-exec "C:\\Program Files\\NVIDIA Corporation\\NVSMI\\nvidia-smi.exe"';
+          if (gpu.includes('amd') || gpu.includes('radeon')) return 'shell-exec "C:\\Program Files\\AMD\\CNext\\CNext\\RadeonSoftware.exe"';
+          return 'shell-exec ms-settings:display';
         }
 
         function shellExec(cmd) {
@@ -135,10 +154,10 @@
 
               <div
                 className="module gpu clickable"
-                onClick={() => shellExec('"C:\\Program Files\\AMD\\CNext\\CNext\\RadeonSoftware.exe"')}
+                onClick={() => shellExec(getGpuClickCmd())}
               >
                 <i className="nf nf-md-video_account"></i>
-                AMD RX 6700
+                {getPrimaryGpu()}
               </div>
 
               {output.network && (
