@@ -8,7 +8,7 @@
   --accent: var(--wallpaper-primary, #5b3f9e);
   --text: var(--wallpaper-text, #000000);
   --text-muted: #AAB2C0;
-  --font: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+  --font: "JetBrainsMono Nerd Font", "BlexMono Nerd Font", monospace;
   --module-radius: 10px;
   --module-padding: 0 12px;
   --module-margin: 3px;
