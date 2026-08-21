@@ -70,7 +70,7 @@ try {
 }
 "@
 
-    $cssPath = Join-Path $PSScriptRoot "wallpaper-colors.css"
+    $cssPath = Join-Path "$env:USERPROFILE\.glzr\zebar\odyssey-bar" "wallpaper-colors.css"
     [System.IO.File]::WriteAllText($cssPath, $css)
     Write-Host "Wallpaper colors written to $cssPath"
 

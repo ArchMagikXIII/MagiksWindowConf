@@ -2,17 +2,17 @@
 size = 10.0
 
 [font.normal]
-family = "BlexMono Nerd Font"
+family = "BlexMono Nerd Font Text"
 style = "Text"
 
 [font.bold]
-family = "BlexMono Nerd Font"
+family = "BlexMono Nerd Font Text"
 style = "Bold"
 
 [font.italic]
-family = "BlexMono Nerd Font"
+family = "BlexMono Nerd Font Text"
 style = "Text Italic"
 
 [font.bold_italic]
-family = "BlexMono Nerd Font"
+family = "BlexMono Nerd Font Text"
 style = "Bold Italic"

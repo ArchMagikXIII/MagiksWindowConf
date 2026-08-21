@@ -68,14 +68,19 @@ foreach ($font in $fonts) {
     if (-not (Test-Path $destUser) -and -not (Test-Path $destSystem)) {
         # Copy to user fonts folder
         Copy-Item $font.FullName $destUser -Force
+        # Get the actual font family name from the TTF
+        Add-Type -AssemblyName System.Drawing
+        $fc = New-Object System.Drawing.Text.PrivateFontCollection
+        $fc.AddFontFile($font.FullName)
+        $fontFamily = $fc.Families[0].Name
         # Register in HKCU for user
         $regPath = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
-        New-ItemProperty -Path $regPath -Name "$($font.BaseName) (TrueType)" -Value $font.Name -PropertyType String -Force | Out-Null
+        New-ItemProperty -Path $regPath -Name "$fontFamily (TrueType)" -Value $font.Name -PropertyType String -Force | Out-Null
         # Also try system-wide install
         Copy-Item $font.FullName $destSystem -Force
         $regPathSystem = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
-        New-ItemProperty -Path $regPathSystem -Name "$($font.BaseName) (TrueType)" -Value $font.Name -PropertyType String -Force | Out-Null
-        Write-Ok "Installed $($font.Name)"
+        New-ItemProperty -Path $regPathSystem -Name "$fontFamily (TrueType)" -Value $font.Name -PropertyType String -Force | Out-Null
+        Write-Ok "Installed $fontFamily ($($font.Name))"
     } else {
         Write-Ok "$($font.Name) already installed"
     }
@@ -88,6 +93,10 @@ Write-Step "Deploying configuration files..."
 $glazewmHome = "$env:USERPROFILE\.glzr\glazewm"
 New-Item -ItemType Directory -Path $glazewmHome -Force | Out-Null
 Copy-Item "$SetupDir\configs\glazewm\config.yaml" "$glazewmHome\config.yaml" -Force
+# Rewrite hardcoded paths to current user
+$glazewmConfig = Get-Content "$glazewmHome\config.yaml" -Raw
+$glazewmConfig = $glazewmConfig -replace 'C:\\Users\\Administrator', $env:USERPROFILE.Replace('\', '\\')
+$glazewmConfig | Out-File -FilePath "$glazewmHome\config.yaml" -Encoding UTF8
 Write-Ok "GlazeWM config deployed"
 
 # Zebar
