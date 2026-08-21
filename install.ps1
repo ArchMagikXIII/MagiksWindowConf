@@ -108,7 +108,13 @@ $zebarPack = "$zebarHome\odyssey-bar"
 New-Item -ItemType Directory -Path $zebarPack -Force | Out-Null
 Copy-Item "$SetupDir\configs\zebar\settings.json" "$zebarHome\settings.json" -Force
 Copy-Item "$SetupDir\configs\zebar\odyssey-bar\*" "$zebarPack\" -Force
-Write-Ok "Zebar config + Odyssey Bar deployed"
+
+# Theme files
+$themesDir = "$zebarHome\themes"
+New-Item -ItemType Directory -Path $themesDir -Force | Out-Null
+Copy-Item "$SetupDir\configs\zebar\themes\*" "$themesDir\" -Force
+Copy-Item "$SetupDir\configs\zebar\cycle-theme.ps1" "$zebarHome\cycle-theme.ps1" -Force
+Write-Ok "Zebar config + Odyssey Bar + themes deployed"
 
 # Alacritty
 $alacrittyDir = "$env:APPDATA\alacritty"

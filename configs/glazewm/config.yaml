@@ -260,6 +260,10 @@ keybindings:
   - commands: ['wm-redraw']
     bindings: ['alt+shift+w']
 
+  # Cycle Zebar theme
+  - commands: ['shell-exec powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\\Users\\Administrator\\.glzr\\zebar\\cycle-theme.ps1"', 'wm-redraw']
+    bindings: ['alt+shift+t']
+
   # Launch CMD terminal. Alternatively, use `shell-exec wt` or
   # `shell-exec %ProgramFiles%/Git/git-bash.exe` to start Windows
   # Terminal and Git Bash respectively.
