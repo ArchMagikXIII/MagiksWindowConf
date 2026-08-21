@@ -2,11 +2,11 @@
 
 :root {
   --bg: #000000;
-  --surface: var(--wallpaper-primary, #5b3f9e);
-  --surface-light: var(--wallpaper-light, #7b5fbe);
-  --surface-dark: var(--wallpaper-dark, #3b1f7e);
-  --accent: var(--wallpaper-primary, #5b3f9e);
-  --text: var(--wallpaper-text, #000000);
+  --surface: #5b3f9e;
+  --surface-light: #7b5fbe;
+  --surface-dark: #3b1f7e;
+  --accent: #5b3f9e;
+  --text: #ffffff;
   --text-muted: #AAB2C0;
   --font: "JetBrainsMono Nerd Font", "BlexMono Nerd Font", monospace;
   --module-radius: 10px;

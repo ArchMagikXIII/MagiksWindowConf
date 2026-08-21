@@ -17,7 +17,8 @@
       "privileges": {
         "shellCommands": [
           { "program": "taskmgr.exe", "argsRegex": ".*" },
-          { "program": "ms-settings:.*", "argsRegex": ".*" }
+          { "program": "ms-settings:.*", "argsRegex": ".*" },
+          { "program": "powershell.exe", "argsRegex": ".*get-wallpaper-colors\\.ps1.*" }
         ]
       },
       "presets": [

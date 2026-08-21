@@ -4,7 +4,6 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="stylesheet" type="text/css" href="./styles.css" />
-    <link rel="stylesheet" type="text/css" href="./wallpaper-colors.css" />
     <script src="./gpu-info.js"></script>
     <script
       src="https://unpkg.com/@babel/standalone@7.25.6/babel.min.js"
@@ -31,12 +30,45 @@
 
       createRoot(document.getElementById('root')).render(<App />);
 
+      const WALLPAPER_SCRIPT_NAME = 'get-wallpaper-colors.ps1';
+      let lastWallpaperPath = '';
+
+      function applyWallpaperColors(colors) {
+        const root = document.documentElement.style;
+        root.setProperty('--surface', colors.primary);
+        root.setProperty('--surface-light', colors.light);
+        root.setProperty('--surface-dark', colors.dark);
+        root.setProperty('--accent', colors.primary);
+        root.setProperty('--text', colors.text);
+      }
+
+      async function refreshWallpaperColors(glazewm) {
+        if (!glazewm) return;
+        try {
+          const cmd = `shell-exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%USERPROFILE%\\.glzr\\zebar\\odyssey-bar\\${WALLPAPER_SCRIPT_NAME}"`;
+          const stdout = await glazewm.runCommand(cmd);
+          if (!stdout) return;
+          const json = JSON.parse(stdout.trim().split('\n').pop());
+          if (json.path === lastWallpaperPath && json.path !== '') return;
+          lastWallpaperPath = json.path;
+          applyWallpaperColors(json);
+        } catch (e) {
+          console.warn('wallpaper colors refresh failed', e);
+        }
+      }
+
       function App() {
         const [output, setOutput] = useState(providers.outputMap);
 
         useEffect(() => {
           providers.onOutput(() => setOutput(providers.outputMap));
         }, []);
+
+        useEffect(() => {
+          refreshWallpaperColors(output.glazewm);
+          const id = setInterval(() => refreshWallpaperColors(providers.outputMap.glazewm), 30000);
+          return () => clearInterval(id);
+        }, [output.glazewm]);
 
         const workspaceIcons = {
           '1': '\u{f1ff}',
