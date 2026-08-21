@@ -1,0 +1,203 @@
+@import 'https://www.nerdfonts.com/assets/css/webfont.css';
+
+@font-face {
+  font-family: 'JetBrainsMono Nerd Font';
+  src: url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono@latest/fonts/webfonts/JetBrainsMono-Regular.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+}
+
+:root {
+  --bg: #000000;
+  --surface: var(--wallpaper-primary, #5b3f9e);
+  --surface-light: var(--wallpaper-light, #7b5fbe);
+  --surface-dark: var(--wallpaper-dark, #3b1f7e);
+  --accent: var(--wallpaper-primary, #5b3f9e);
+  --text: var(--wallpaper-text, #000000);
+  --text-muted: #AAB2C0;
+  --font: "JetBrainsMono Nerd Font", "JetBrains Mono", monospace;
+  --module-radius: 10px;
+  --module-padding: 0 12px;
+  --module-margin: 3px;
+  --bar-height: 28px;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font);
+  font-size: 14px;
+  overflow: hidden;
+  background: transparent;
+  color: var(--text);
+}
+
+#root {
+  background: var(--bg);
+  border-radius: 14px;
+  margin: 0;
+}
+
+.app {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: center;
+  height: 100%;
+  padding: 0 8px;
+}
+
+.left, .center, .right {
+  display: flex;
+  align-items: center;
+}
+
+.left {
+  gap: 4px;
+}
+
+.center {
+  justify-self: center;
+  gap: 8px;
+}
+
+.right {
+  justify-self: end;
+  gap: 0;
+}
+
+div, span, p {
+  user-select: none;
+}
+
+/* Logo */
+.logo {
+  color: var(--text);
+  font-size: 14px;
+  margin-right: 6px;
+}
+
+/* Workspace buttons */
+.workspaces {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.workspace {
+  background: transparent;
+  color: var(--text-muted);
+  border: none;
+  border-radius: 50%;
+  min-width: 18px;
+  min-height: 18px;
+  padding: 0 6px;
+  margin: 3px 2px;
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s;
+}
+
+.workspace:hover {
+  color: var(--text);
+}
+
+.workspace.focused {
+  color: var(--accent);
+}
+
+/* Generic module chip */
+.module {
+  background: var(--surface);
+  color: var(--text);
+  padding: var(--module-padding);
+  margin: var(--module-margin);
+  border-radius: var(--module-radius);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  font-size: 13px;
+  transition: filter 0.15s, transform 0.1s;
+}
+
+.module i {
+  font-size: 14px;
+}
+
+/* Network and bluetooth get slightly larger icons */
+.module.network, .module.bluetooth {
+  font-size: 16px;
+}
+
+.module.network i, .module.bluetooth i {
+  font-size: 16px;
+}
+
+/* Audio slider */
+.audio-slider {
+  background: var(--surface);
+  padding: 0 10px;
+  margin: var(--module-margin);
+  border-radius: var(--module-radius);
+  min-width: 80px;
+  display: flex;
+  align-items: center;
+}
+
+.audio-slider input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 70px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.15);
+  outline: none;
+}
+
+.audio-slider input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text);
+  cursor: pointer;
+}
+
+/* Clickable modules */
+.clickable {
+  cursor: pointer;
+}
+
+.clickable:hover {
+  filter: brightness(1.2);
+  transform: scale(1.05);
+}
+
+.clickable:active {
+  transform: scale(0.95);
+}
+
+/* Clock */
+.clock {
+  background: var(--surface);
+  color: var(--text);
+  padding: var(--module-padding);
+  margin: var(--module-margin);
+  border-radius: var(--module-radius);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+/* GPU module */
+.module.gpu {
+  background: var(--surface);
+}
