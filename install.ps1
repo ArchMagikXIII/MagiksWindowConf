@@ -95,8 +95,9 @@ New-Item -ItemType Directory -Path $glazewmHome -Force | Out-Null
 Copy-Item "$SetupDir\configs\glazewm\config.yaml" "$glazewmHome\config.yaml" -Force
 # Rewrite hardcoded paths to current user
 $glazewmConfig = Get-Content "$glazewmHome\config.yaml" -Raw
-$glazewmConfig = $glazewmConfig -replace 'C:\\Users\\Administrator', $env:USERPROFILE.Replace('\', '\\')
-$glazewmConfig | Out-File -FilePath "$glazewmHome\config.yaml" -Encoding UTF8
+$escapedProfile = [regex]::Escape("C:\Users\Administrator")
+$glazewmConfig = $glazewmConfig -replace $escapedProfile, $env:USERPROFILE
+$glazewmConfig | Out-File -FilePath "$glazewmHome\config.yaml" -Encoding UTF8 -NoNewline
 Write-Ok "GlazeWM config deployed"
 
 # Zebar
