@@ -122,6 +122,23 @@ New-Item -ItemType Directory -Path $asciiDir -Force | Out-Null
 Copy-Item "$SetupDir\assets\ASCII\*" "$asciiDir\" -Force
 Write-Ok "ASCII art deployed"
 
+# ─────────────────────────── PowerShell Modules ───────────────────
+Write-Step "Installing PowerShell modules..."
+$modules = @('Terminal-Icons', 'PSReadLine', 'PSFzf')
+foreach ($mod in $modules) {
+    if (Get-Module -ListAvailable -Name $mod -ErrorAction SilentlyContinue) {
+        Write-Ok "$mod already installed"
+    } else {
+        Write-Host "   Installing $mod..."
+        try {
+            Install-Module -Name $mod -Force -SkipPublisherCheck -Scope CurrentUser -ErrorAction Stop
+            Write-Ok "$mod installed"
+        } catch {
+            Write-Warn "Failed to install $mod - $_"
+        }
+    }
+}
+
 # oh-my-posh theme
 $ompTheme = "$SetupDir\configs\oh-my-posh\night-owl.omp.json"
 $ompDest = "$env:LOCALAPPDATA\Programs\oh-my-posh\themes\night-owl.omp.json"
@@ -193,19 +210,6 @@ if (Test-Path $glazewmExe) {
     }
 } else {
     Write-Warn "GlazeWM exe not found at $glazewmExe - skipping startup setup"
-}
-
-# ─────────────────────────── PowerShell Modules ───────────────────
-Write-Step "Installing PowerShell modules..."
-$modules = @('Terminal-Icons', 'PSReadLine', 'PSFzf')
-foreach ($mod in $modules) {
-    if (Get-Module -ListAvailable -Name $mod -ErrorAction SilentlyContinue) {
-        Write-Ok "$mod already installed"
-    } else {
-        Write-Host "   Installing $mod..."
-        Install-Module -Name $mod -Force -SkipPublisherCheck -Scope CurrentUser
-        Write-Ok "$mod installed"
-    }
 }
 
 # ─────────────────────────── Done ─────────────────────────────────

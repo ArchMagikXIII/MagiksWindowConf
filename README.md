@@ -46,8 +46,3 @@ The installer includes wallpapers and automatically extracts dominant colors fro
 
 - Windows 10/11
 - Administrator access for installation
-
-## Manual Steps
-
-- **Zebar**: Download from [zebar releases](https://github.com/glzr-io/zebar/releases) if not installed
-- **Zoxide**: Install via `winget install ajeetdsouza.zoxide` or `choco install zoxide`

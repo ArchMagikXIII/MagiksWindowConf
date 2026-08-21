@@ -2,14 +2,16 @@
 fastfetch
 
 # Zoxide (Jump directories)
-Invoke-Expression (& { (zoxide init powershell | Out-String) })
+try { Invoke-Expression (& { (zoxide init powershell | Out-String) }) } catch {}
 
 # FZF & Hotkeys
-Import-Module PSFzf
-Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+try {
+    Import-Module PSFzf -ErrorAction Stop
+    Set-PsFzfOption -PSReadlineChordProvider 'Ctrl+t' -PSReadlineChordReverseHistory 'Ctrl+r'
+} catch {}
 
 # --- Icons ---
-Import-Module Terminal-Icons
+try { Import-Module Terminal-Icons -ErrorAction Stop } catch {}
 
 # --- Oh My Posh ---
 $ompTheme = "$env:LOCALAPPDATA\Programs\oh-my-posh\themes\night-owl.omp.json"
@@ -19,16 +21,13 @@ if (Test-Path $ompTheme) {
     oh-my-posh init pwsh --config "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/night-owl.omp.json" | Invoke-Expression
 }
 # Enable predictive suggestions (Fish-like)
-Set-PSReadLineOption -PredictionSource History
-Set-PSReadLineOption -PredictionViewStyle ListView
+try {
+    Set-PSReadLineOption -PredictionSource History
+    Set-PSReadLineOption -PredictionViewStyle ListView
+    Set-PSReadLineOption -Colors @{ InlinePrediction = "DarkGray" }
+} catch {}
 
-# Use a standard console color for suggestions instead of raw escape codes
-Set-PSReadLineOption -Colors @{ InlinePrediction = "DarkGray" }
-# Import the Chocolatey Profile that contains the necessary code to enable
-# tab-completions to function for `choco`.
-# Be aware that if you are missing these lines from your profile, tab completion
-# for `choco` will not function.
-# See https://ch0.co/tab-completion for details.
+# Chocolatey tab completion
 $ChocolateyProfile = "$env:ChocolateyInstall\helpers\chocolateyProfile.psm1"
 if (Test-Path($ChocolateyProfile)) {
   Import-Module "$ChocolateyProfile"

@@ -1,6 +1,7 @@
 general:
   startup_commands:
     - 'shell-exec powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\Administrator\.glzr\zebar\odyssey-bar\get-wallpaper-colors.ps1"'
+    - 'shell-exec powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\Administrator\.glzr\zebar\odyssey-bar\get-gpu-info.ps1"'
     - 'shell-exec zebar'
 
   # Commands to run just before the WM is shutdown.
