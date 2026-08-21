@@ -7,7 +7,7 @@ One-click Windows installer for a complete tiling WM desktop environment.
 | Component | Description |
 |-----------|-------------|
 | **GlazeWM** | Tiling window manager with custom keybindings |
-| **Zebar** | Status bar (Odyssey Bar) with wallpaper-adaptive colors |
+| **Zebar** | Status bar (Magik Bar) with wallpaper-adaptive colors |
 | **Alacritty** | GPU-accelerated terminal with BlexMono Nerd Font |
 | **Brave** | Privacy-focused browser |
 | **oh-my-posh** | Prompt theme (night-owl) |

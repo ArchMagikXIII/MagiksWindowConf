@@ -114,7 +114,7 @@ $themesDir = "$zebarHome\themes"
 New-Item -ItemType Directory -Path $themesDir -Force | Out-Null
 Copy-Item "$SetupDir\configs\zebar\themes\*" "$themesDir\" -Force
 Copy-Item "$SetupDir\configs\zebar\cycle-theme.ps1" "$zebarHome\cycle-theme.ps1" -Force
-Write-Ok "Zebar config + Odyssey Bar + themes deployed"
+Write-Ok "Zebar config + Magik Bar + themes deployed"
 
 # Alacritty
 $alacrittyDir = "$env:APPDATA\alacritty"

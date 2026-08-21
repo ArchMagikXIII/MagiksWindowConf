@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/glzr-io/zebar/main/resources/zpack-schema.json",
-  "name": "Odyssey Bar",
+  "name": "Magik Bar",
   "version": "1.0.0",
   "description": "A waybar-style status bar matching the OdysseyWM theme.",
   "tags": ["bar", "waybar", "minimal"],
