@@ -97,7 +97,8 @@ Copy-Item "$SetupDir\configs\glazewm\config.yaml" "$glazewmHome\config.yaml" -Fo
 $glazewmConfig = Get-Content "$glazewmHome\config.yaml" -Raw
 $escapedProfile = [regex]::Escape("C:\Users\Administrator")
 $glazewmConfig = $glazewmConfig -replace $escapedProfile, $env:USERPROFILE
-$glazewmConfig | Out-File -FilePath "$glazewmHome\config.yaml" -Encoding UTF8 -NoNewline
+# Write without BOM (Out-File UTF8 adds BOM which GlazeWM can't parse)
+[System.IO.File]::WriteAllText("$glazewmHome\config.yaml", $glazewmConfig)
 Write-Ok "GlazeWM config deployed"
 
 # Zebar
