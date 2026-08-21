@@ -113,7 +113,19 @@ $themesDir = "$zebarHome\themes"
 New-Item -ItemType Directory -Path $themesDir -Force | Out-Null
 Copy-Item "$SetupDir\configs\zebar\themes\*" "$themesDir\" -Force
 Copy-Item "$SetupDir\configs\zebar\cycle-theme.ps1" "$zebarHome\cycle-theme.ps1" -Force
+Copy-Item "$SetupDir\configs\zebar\zebar-startup.ps1" "$zebarHome\zebar-startup.ps1" -Force
 Write-Ok "Zebar config + Magik Bar + themes deployed"
+
+# Generate gpu-info.js now so it exists on first boot
+$gpuScript = "$zebarPack\get-gpu-info.ps1"
+if (Test-Path $gpuScript) {
+    try {
+        Start-Process powershell -ArgumentList "-ExecutionPolicy Bypass -WindowStyle Hidden -File `"$gpuScript`"" -Wait -NoNewWindow
+        Write-Ok "GPU info detected"
+    } catch {
+        Write-Warn "Could not detect GPU (non-fatal)"
+    }
+}
 
 # Alacritty
 $alacrittyDir = "$env:APPDATA\alacritty"
