@@ -38,7 +38,9 @@ $packages = @(
     'oh-my-posh',
     'fastfetch',
     'alacritty',
-    'brave'
+    'brave',
+    'glazewm',
+    'zebar'
 )
 foreach ($pkg in $packages) {
     if (choco list --local-only $pkg 2>$null | Select-String $pkg) {
@@ -56,41 +58,27 @@ $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';
 # ─────────────────────────── Fonts ────────────────────────────────
 Write-Step "Installing Nerd Fonts..."
 $fonts = Get-ChildItem "$SetupDir\fonts\*.ttf" -ErrorAction SilentlyContinue
-$fontDest = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
-New-Item -ItemType Directory -Path $fontDest -Force | Out-Null
+$fontDestUser = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
+$fontDestSystem = "C:\Windows\Fonts"
+New-Item -ItemType Directory -Path $fontDestUser -Force | Out-Null
 
 foreach ($font in $fonts) {
-    $dest = Join-Path $fontDest $font.Name
-    if (-not (Test-Path $dest)) {
-        Copy-Item $font.FullName $dest -Force
-        # Register for user
+    $destUser = Join-Path $fontDestUser $font.Name
+    $destSystem = Join-Path $fontDestSystem $font.Name
+    if (-not (Test-Path $destUser) -and -not (Test-Path $destSystem)) {
+        # Copy to user fonts folder
+        Copy-Item $font.FullName $destUser -Force
+        # Register in HKCU for user
         $regPath = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
         New-ItemProperty -Path $regPath -Name "$($font.BaseName) (TrueType)" -Value $font.Name -PropertyType String -Force | Out-Null
+        # Also try system-wide install
+        Copy-Item $font.FullName $destSystem -Force
+        $regPathSystem = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Fonts"
+        New-ItemProperty -Path $regPathSystem -Name "$($font.BaseName) (TrueType)" -Value $font.Name -PropertyType String -Force | Out-Null
         Write-Ok "Installed $($font.Name)"
     } else {
         Write-Ok "$($font.Name) already installed"
     }
-}
-
-# ─────────────────────────── GlazeWM ─────────────────────────────
-Write-Step "Installing GlazeWM..."
-if (-not (Get-Command glazewm -ErrorAction SilentlyContinue)) {
-    choco install glazewm -y --no-progress
-    Write-Ok "GlazeWM installed"
-} else {
-    Write-Ok "GlazeWM already installed"
-}
-$env:PATH = [System.Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH', 'User')
-
-# ─────────────────────────── Zebar ───────────────────────────────
-Write-Step "Checking for Zebar..."
-if (-not (Test-Path "C:\Program Files\glzr.io\Zebar\zebar.exe")) {
-    Write-Warn "Zebar not found at default path."
-    Write-Warn "Download from: https://github.com/glzr-io/zebar/releases"
-    Write-Warn "Press Enter after installing Zebar, or Ctrl+C to abort."
-    Read-Host
-} else {
-    Write-Ok "Zebar found"
 }
 
 # ─────────────────────────── Config Files ─────────────────────────
