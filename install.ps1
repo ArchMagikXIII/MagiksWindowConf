@@ -33,6 +33,8 @@ if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
 # ─────────────────────────── Packages ─────────────────────────────
 Write-Step "Installing packages via Chocolatey..."
 $packages = @(
+    'git',
+    'gh',
     'oh-my-posh',
     'fastfetch',
     'alacritty',
