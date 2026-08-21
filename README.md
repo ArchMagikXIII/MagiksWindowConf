@@ -16,10 +16,15 @@ One-click Windows installer for a complete tiling WM desktop environment.
 
 ## Quick Start
 
-1. Copy this folder to your new Windows machine
-2. Right-click `install.ps1` → **Run with PowerShell** (as Admin)
-3. Log out and back in for PATH changes
-4. GlazeWM auto-starts on login
+**Option A — PowerShell one-liner (no git needed):**
+```powershell
+Invoke-RestMethod https://github.com/ArchMagikXIII/MagiksWindowConf/archive/refs/heads/main.zip -OutFile "$env:TEMP\setup.zip"; Expand-Archive "$env:TEMP\setup.zip" "$env:TEMP\setup" -Force; & "$env:TEMP\setup\MagiksWindowConf-main\install.ps1"
+```
+
+**Option B — Manual download:**
+1. Download ZIP from [Releases](https://github.com/ArchMagikXIII/MagiksWindowConf/archive/refs/heads/main.zip)
+2. Extract it
+3. Right-click `install.ps1` → **Run with PowerShell** (as Admin)
 
 ## Key Bindings
 
