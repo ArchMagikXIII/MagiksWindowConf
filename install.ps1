@@ -138,13 +138,15 @@ New-Item -ItemType Directory -Path $zebarPack -Force | Out-Null
 Copy-Item "$SetupDir\configs\zebar\settings.json" "$zebarHome\settings.json" -Force
 Copy-Item "$SetupDir\configs\zebar\odyssey-bar\*" "$zebarPack\" -Force
 
-# Theme files
+# Theme files (optional - only if present in the repo)
 $themesDir = "$zebarHome\themes"
 New-Item -ItemType Directory -Path $themesDir -Force | Out-Null
-Copy-Item "$SetupDir\configs\zebar\themes\*" "$themesDir\" -Force
-Copy-Item "$SetupDir\configs\zebar\cycle-theme.ps1" "$zebarHome\cycle-theme.ps1" -Force
+if (Test-Path "$SetupDir\configs\zebar\themes") {
+    Copy-Item "$SetupDir\configs\zebar\themes\*" "$themesDir\" -Force
+    Copy-Item "$SetupDir\configs\zebar\cycle-theme.ps1" "$zebarHome\cycle-theme.ps1" -Force
+}
 Copy-Item "$SetupDir\configs\zebar\zebar-startup.ps1" "$zebarHome\zebar-startup.ps1" -Force
-Write-Ok "Zebar config + Magik Bar + themes deployed"
+Write-Ok "Zebar config + Magik Bar deployed"
 
 # Generate gpu-info.js now so it exists on first boot
 $gpuScript = "$zebarPack\get-gpu-info.ps1"

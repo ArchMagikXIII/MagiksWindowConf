@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/glzr-io/zebar/main/resources/zpack-schema.json",
-  "name": "Magik Bar",
+  "name": "Odyssey Bar",
   "version": "1.0.0",
   "description": "A waybar-style status bar matching the OdysseyWM theme.",
   "tags": ["bar", "waybar", "minimal"],
@@ -20,8 +20,7 @@
       "privileges": {
         "shellCommands": [
           { "program": "taskmgr.exe", "argsRegex": ".*" },
-          { "program": "ms-settings:.*", "argsRegex": ".*" },
-          { "program": "powershell.exe", "argsRegex": ".*get-wallpaper-colors\\.ps1.*" }
+          { "program": "ms-settings:.*", "argsRegex": ".*" }
         ]
       },
       "presets": [
