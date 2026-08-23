@@ -1,6 +1,7 @@
 general:
   startup_commands:
-    - 'shell-exec powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\Administrator\.glzr\zebar\zebar-startup.ps1"'
+    - 'shell-exec powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\Administrator\.glzr\zebar\odyssey-bar\watch-wallpaper.ps1"'
+    - 'shell-exec zebar'
 
   # Commands to run just before the WM is shutdown.
   # Example: The below command kills Zebar.
