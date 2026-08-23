@@ -199,9 +199,16 @@ Write-Ok "Alacritty config deployed"
 $ffDir = "$env:USERPROFILE\.config\fastfetch"
 New-Item -ItemType Directory -Path $ffDir -Force | Out-Null
 Copy-Item "$SetupDir\configs\fastfetch\config.jsonc" "$ffDir\config.jsonc" -Force
+# Rewrite hardcoded paths to current user (config uses forward slashes)
+$ffConfig = Get-Content "$ffDir\config.jsonc" -Raw
+$escapedFwd = [regex]::Escape("C:/Users/Administrator")
+$escapedBwd = [regex]::Escape("C:\Users\Administrator")
+$ffConfig = $ffConfig -replace $escapedFwd, ($env:USERPROFILE -replace '\\', '/')
+$ffConfig = $ffConfig -replace $escapedBwd, $env:USERPROFILE
+[System.IO.File]::WriteAllText("$ffDir\config.jsonc", $ffConfig)
 Write-Ok "Fastfetch config deployed"
 
-# ASCII art
+# ASCII art (incl. MagikOS.txt used by the fastfetch logo)
 $asciiDir = "$env:USERPROFILE\Pictures\ASCII"
 New-Item -ItemType Directory -Path $asciiDir -Force | Out-Null
 Copy-Item "$SetupDir\assets\ASCII\*" "$asciiDir\" -Force
