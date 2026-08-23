@@ -4,7 +4,8 @@
     MagikXIII Desktop Setup Installer
 .DESCRIPTION
     Installs GlazeWM, Zebar, Alacritty, oh-my-posh, fastfetch, Neovim,
-    and all configuration files for a complete tiling WM desktop.
+    optional NVIDIA App / AMD Adrenalin, and all configuration files
+    for a complete tiling WM desktop.
 .NOTES
     Run as Administrator: Right-click -> Run with PowerShell
 #>
@@ -55,6 +56,34 @@ foreach ($pkg in $packages) {
 
 # Refresh PATH
 $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH', 'User')
+
+# ─────────────────────────── GPU Software ─────────────────────────
+Write-Step "GPU software (optional)..."
+Write-Host "   1) NVIDIA App"
+Write-Host "   2) AMD Adrenalin"
+Write-Host "   3) Both"
+Write-Host "   4) Skip"
+$gpuPkgs = @()
+switch (Read-Host "   Which GPU software do you want? (1-4, default 4)") {
+    '1' { $gpuPkgs = @('nvidia-app') }
+    '2' { $gpuPkgs = @('amd-software-adrenalin-edition') }
+    '3' { $gpuPkgs = @('nvidia-app', 'amd-software-adrenalin-edition') }
+    default { $gpuPkgs = @() }
+}
+
+foreach ($pkg in $gpuPkgs) {
+    if (choco list --local-only $pkg 2>$null | Select-String $pkg) {
+        Write-Ok "$pkg already installed"
+    } else {
+        Write-Host "   Installing $pkg (this can take a while)..."
+        choco install $pkg -y --no-progress
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok "$pkg installed"
+        } else {
+            Write-Warn "$pkg failed to install (non-fatal)"
+        }
+    }
+}
 
 # ─────────────────────────── Fonts ────────────────────────────────
 Write-Step "Installing Nerd Fonts..."
