@@ -71,17 +71,47 @@ switch (Read-Host "   Which GPU software do you want? (1-4, default 4)") {
     default { $gpuPkgs = @() }
 }
 
+$amdDriversUrl = 'https://www.amd.com/en/support/download/drivers.html'
+$uaHeaders = @{ 'User-Agent' = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
+
 foreach ($pkg in $gpuPkgs) {
     if (choco list --local-only $pkg 2>$null | Select-String $pkg) {
         Write-Ok "$pkg already installed"
-    } else {
-        Write-Host "   Installing $pkg (this can take a while)..."
-        choco install $pkg -y --no-progress
-        if ($LASTEXITCODE -eq 0) {
-            Write-Ok "$pkg installed"
-        } else {
-            Write-Warn "$pkg failed to install (non-fatal)"
+        continue
+    }
+    Write-Host "   Installing $pkg (this can take a while)..."
+    choco install $pkg -y --no-progress
+    if ($LASTEXITCODE -eq 0) {
+        Write-Ok "$pkg installed"
+        continue
+    }
+
+    # Chocolatey packages for GPU software embed vendor CDN links that AMD/
+    # NVIDIA rotate frequently - fall back to fetching straight from the vendor.
+    if ($pkg -eq 'amd-software-adrenalin-edition') {
+        Write-Warn "Chocolatey download failed - falling back to AMD's web installer..."
+        try {
+            $page = Invoke-WebRequest -UseBasicParsing $amdDriversUrl -Headers $uaHeaders -ErrorAction Stop
+            $setupUrl = ([regex]::Matches($page.Content, 'https://drivers\.amd\.com/drivers/[^\s"'']+?\.exe') |
+                Select-Object -ExpandProperty Value -First 1)
+            if (-not $setupUrl) { throw 'no Adrenalin installer link found on AMD site' }
+            Write-Host "   Downloading $(Split-Path $setupUrl -Leaf)..."
+            $setup = "$env:TEMP\amd-adrenalin-setup.exe"
+            Invoke-WebRequest -UseBasicParsing $setupUrl -OutFile $setup `
+                -Headers ($uaHeaders + @{ Referer = $amdDriversUrl }) -ErrorAction Stop
+            Start-Process -FilePath $setup -ArgumentList '-install' -Wait
+            Write-Ok "AMD Adrenalin installed via AMD web installer"
+        } catch {
+            Write-Warn "AMD web installer failed: $_"
+            Write-Warn "Download manually from: $amdDriversUrl"
+            Start-Process $amdDriversUrl
         }
+    } elseif ($pkg -eq 'nvidia-app') {
+        Write-Warn "NVIDIA App failed to install - grab it manually from:"
+        Write-Warn "  https://www.nvidia.com/en-us/software/nvidia-app/"
+        Start-Process 'https://www.nvidia.com/en-us/software/nvidia-app/'
+    } else {
+        Write-Warn "$pkg failed to install (non-fatal)"
     }
 }
 
