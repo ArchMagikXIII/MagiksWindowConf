@@ -224,6 +224,13 @@ foreach ($mod in $modules) {
     }
 }
 
+# Purge stale Terminal-Icons preferences (old versions can leave an unreadable
+# prefs.xml behind, causing a parse warning in every new shell)
+$prefsFile = "$env:APPDATA\powershell\Community\Terminal-Icons\prefs.xml"
+if (Test-Path $prefsFile) {
+    try { Import-Clixml $prefsFile | Out-Null } catch { Remove-Item $prefsFile -Force }
+}
+
 # oh-my-posh theme
 $ompTheme = "$SetupDir\configs\oh-my-posh\night-owl.omp.json"
 $ompDest = "$env:LOCALAPPDATA\Programs\oh-my-posh\themes\night-owl.omp.json"
