@@ -3,7 +3,7 @@
 .SYNOPSIS
     MagikXIII Desktop Setup Installer
 .DESCRIPTION
-    Installs GlazeWM, Zebar, Alacritty, oh-my-posh, fastfetch,
+    Installs GlazeWM, Zebar, Alacritty, oh-my-posh, fastfetch, Neovim,
     and all configuration files for a complete tiling WM desktop.
 .NOTES
     Run as Administrator: Right-click -> Run with PowerShell
@@ -40,7 +40,8 @@ $packages = @(
     'alacritty',
     'brave',
     'glazewm',
-    'zebar'
+    'zebar',
+    'neovim'
 )
 foreach ($pkg in $packages) {
     if (choco list --local-only $pkg 2>$null | Select-String $pkg) {
@@ -247,6 +248,7 @@ Write-Host "  - Zebar (status bar with wallpaper colors)"
 Write-Host "  - Alacritty (terminal)"
 Write-Host "  - oh-my-posh (prompt theme: night-owl)"
 Write-Host "  - fastfetch (system info)"
+Write-Host "  - Neovim (editor)"
 Write-Host "  - JetBrains Mono + BlexMono Nerd Fonts"
 Write-Host "  - PowerShell profile (zoxide, PSFzf, icons)"
 Write-Host ""
