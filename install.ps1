@@ -154,7 +154,7 @@ $glazewmHome = "$env:USERPROFILE\.glzr\glazewm"
 New-Item -ItemType Directory -Path $glazewmHome -Force | Out-Null
 Copy-Item "$SetupDir\configs\glazewm\config.yaml" "$glazewmHome\config.yaml" -Force
 # Rewrite hardcoded paths to current user
-$glazewmConfig = Get-Content "$glazewmHome\config.yaml" -Raw
+$glazewmConfig = Get-Content "$glazewmHome\config.yaml" -Raw -Encoding UTF8
 $escapedProfile = [regex]::Escape("C:\Users\Administrator")
 $glazewmConfig = $glazewmConfig -replace $escapedProfile, $env:USERPROFILE
 # Write without BOM (Out-File UTF8 adds BOM which GlazeWM can't parse)
@@ -200,7 +200,7 @@ $ffDir = "$env:USERPROFILE\.config\fastfetch"
 New-Item -ItemType Directory -Path $ffDir -Force | Out-Null
 Copy-Item "$SetupDir\configs\fastfetch\config.jsonc" "$ffDir\config.jsonc" -Force
 # Rewrite hardcoded paths to current user (config uses forward slashes)
-$ffConfig = Get-Content "$ffDir\config.jsonc" -Raw
+$ffConfig = Get-Content "$ffDir\config.jsonc" -Raw -Encoding UTF8
 $escapedFwd = [regex]::Escape("C:/Users/Administrator")
 $escapedBwd = [regex]::Escape("C:\Users\Administrator")
 $ffConfig = $ffConfig -replace $escapedFwd, ($env:USERPROFILE -replace '\\', '/')
