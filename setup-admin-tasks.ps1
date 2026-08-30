@@ -54,7 +54,10 @@ foreach ($t in $tasks) {
     Unregister-ScheduledTask -TaskName $t.Name -Confirm:$false -ErrorAction SilentlyContinue
 
     $action  = New-ScheduledTaskAction -Execute $t.Exe
-    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 1)
+    # MultipleInstances Parallel: Alt+Enter spawns a fresh Alacritty even if one is open
+    # (IgnoreNew silently refuses the second launch). ExecutionTimeLimit PT0S: never
+    # force-kill the window after 72h.
+    $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries -RestartCount 5 -RestartInterval (New-TimeSpan -Minutes 1) -MultipleInstances Parallel -ExecutionTimeLimit ([TimeSpan]::Zero)
     $registerArgs = @{
         TaskName  = $t.Name
         Action    = $action
