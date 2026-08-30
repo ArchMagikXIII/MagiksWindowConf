@@ -14,7 +14,9 @@ try {
 try { Import-Module Terminal-Icons -ErrorAction Stop } catch {}
 
 # --- Oh My Posh ---
-$ompTheme = "$env:LOCALAPPDATA\Programs\oh-my-posh\themes\night-owl.omp.json"
+# Store/winget installs put themes elsewhere; deploy a user copy here.
+$ompTheme = "$env:USERPROFILE\.config\oh-my-posh\themes\night-owl.omp.json"
+if (-not (Test-Path $ompTheme)) { $ompTheme = "$env:LOCALAPPDATA\Programs\oh-my-posh\themes\night-owl.omp.json" }
 if (Test-Path $ompTheme) {
     oh-my-posh init pwsh --config "$ompTheme" | Invoke-Expression
 } else {

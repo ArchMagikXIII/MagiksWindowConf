@@ -37,6 +37,7 @@ $packages = @(
     'git',
     'gh',
     'oh-my-posh',
+    'zoxide',
     'fastfetch',
     'alacritty',
     'brave',
@@ -56,6 +57,23 @@ foreach ($pkg in $packages) {
 
 # Refresh PATH
 $env:PATH = [System.Environment]::GetEnvironmentVariable('PATH', 'Machine') + ';' + [System.Environment]::GetEnvironmentVariable('PATH', 'User')
+
+# ─────────────────────────── glaze-autotiler ──────────────────────
+Write-Step "Installing glaze-autotiler (dwindle tiling)..."
+$gaDir = "$env:USERPROFILE\.glzr\glaze-autotiler"
+$gaExe = "$gaDir\glaze-autotiler.exe"
+New-Item -ItemType Directory -Path $gaDir -Force | Out-Null
+if (Test-Path $gaExe) {
+    Write-Ok "glaze-autotiler already installed"
+} else {
+    try {
+        Invoke-WebRequest -UseBasicParsing 'https://github.com/orbi-tal/glaze-autotiler/releases/download/v1.0.4/glaze-autotiler-1.0.4.exe' -OutFile $gaExe -ErrorAction Stop
+        Write-Ok "glaze-autotiler installed (v1.0.4, dwindle default)"
+    } catch {
+        Remove-Item $gaExe -Force -ErrorAction SilentlyContinue
+        Write-Warn "Could not download glaze-autotiler - Dwindle layout will not be active: $_"
+    }
+}
 
 # ─────────────────────────── GPU Software ─────────────────────────
 Write-Step "GPU software (optional)..."
@@ -195,6 +213,9 @@ New-Item -ItemType Directory -Path $alacrittyDir -Force | Out-Null
 Copy-Item "$SetupDir\configs\alacritty\alacritty.toml" "$alacrittyDir\alacritty.toml" -Force
 Write-Ok "Alacritty config deployed"
 
+# NOTE: Elevated launch for Alacritty/GlazeWM is handled by setup-admin-tasks.ps1
+# (a scheduled task needs stored credentials to truly elevate - see below).
+
 # Fastfetch
 $ffDir = "$env:USERPROFILE\.config\fastfetch"
 New-Item -ItemType Directory -Path $ffDir -Force | Out-Null
@@ -217,6 +238,14 @@ Write-Ok "ASCII art deployed"
 # ─────────────────────────── PowerShell Modules ───────────────────
 Write-Step "Installing PowerShell modules..."
 $modules = @('Terminal-Icons', 'PSReadLine', 'PSFzf')
+# Bootstrap NuGet provider + trust PSGallery so Install-Module works
+# non-interactively (avoids the interactive provider/prompt hang).
+try {
+    Install-PackageProvider -Name NuGet -MinimumVersion 2.8.5.201 -Force -Scope CurrentUser -ErrorAction Stop | Out-Null
+    Set-PSRepository -Name PSGallery -InstallationPolicy Trusted -ErrorAction Stop
+} catch {
+    Write-Warn "Could not bootstrap NuGet provider: $_"
+}
 foreach ($mod in $modules) {
     if (Get-Module -ListAvailable -Name $mod -ErrorAction SilentlyContinue) {
         Write-Ok "$mod already installed"
@@ -239,22 +268,43 @@ if (Test-Path $prefsFile) {
 }
 
 # oh-my-posh theme
+# Deploy to a user-writable location that the profile references. The old
+# $env:LOCALAPPDATA\Programs\oh-my-posh\themes target only works for the
+# Chocolatey install; the Windows Store install puts themes under
+# C:\Program Files\WindowsApps (restricted + wiped on update).
 $ompTheme = "$SetupDir\configs\oh-my-posh\night-owl.omp.json"
-$ompDest = "$env:LOCALAPPDATA\Programs\oh-my-posh\themes\night-owl.omp.json"
-if (Test-Path (Split-Path $ompDest)) {
-    Copy-Item $ompTheme $ompDest -Force
-    Write-Ok "oh-my-posh theme deployed"
+$ompDest = "$env:USERPROFILE\.config\oh-my-posh\themes\night-owl.omp.json"
+New-Item -ItemType Directory -Path (Split-Path $ompDest) -Force | Out-Null
+Copy-Item $ompTheme $ompDest -Force
+Write-Ok "oh-my-posh theme deployed"
+
+# PowerShell profile - detect which host(s) are installed so the profile
+# lands in the right place for each one.
+#   - Windows PowerShell 5.1 : Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
+#   - PowerShell 7 (pwsh)    : Documents\PowerShell\Microsoft.PowerShell_profile.ps1
+$profileSource = "$SetupDir\configs\powershell\Microsoft.PowerShell_profile.ps1"
+$psProfilesDeployed = @()
+
+# Windows PowerShell 5.1 (powershell.exe - present on every Windows box)
+$ps51Profile = "$env:USERPROFILE\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1"
+$ps51Dir = Split-Path $ps51Profile
+New-Item -ItemType Directory -Path $ps51Dir -Force | Out-Null
+Copy-Item $profileSource $ps51Profile -Force
+$psProfilesDeployed += "Windows PowerShell 5.1"
+
+# PowerShell 7 (pwsh) - only if actually installed
+$pwshCmd = Get-Command pwsh -ErrorAction SilentlyContinue
+if ($pwshCmd) {
+    $ps7Profile = "$env:USERPROFILE\Documents\PowerShell\Microsoft.PowerShell_profile.ps1"
+    $ps7Dir = Split-Path $ps7Profile
+    New-Item -ItemType Directory -Path $ps7Dir -Force | Out-Null
+    Copy-Item $profileSource $ps7Profile -Force
+    $psProfilesDeployed += "PowerShell 7 (pwsh)"
 } else {
-    New-Item -ItemType Directory -Path (Split-Path $ompDest) -Force | Out-Null
-    Copy-Item $ompTheme $ompDest -Force
-    Write-Ok "oh-my-posh theme deployed (new directory)"
+    Write-Warn "PowerShell 7 (pwsh) not detected - profile only patched for Windows PowerShell 5.1"
 }
 
-# PowerShell profile
-$psDir = "$env:USERPROFILE\Documents\WindowsPowerShell"
-New-Item -ItemType Directory -Path $psDir -Force | Out-Null
-Copy-Item "$SetupDir\configs\powershell\Microsoft.PowerShell_profile.ps1" "$psDir\Microsoft.PowerShell_profile.ps1" -Force
-Write-Ok "PowerShell profile deployed"
+Write-Ok "PowerShell profile deployed to: $($psProfilesDeployed -join ', ')"
 
 # ─────────────────────────── Wallpapers ───────────────────────────
 Write-Step "Setting up wallpapers..."
@@ -292,23 +342,29 @@ if (Test-Path $colorScript) {
 }
 
 # ─────────────────────────── GlazeWM Startup ──────────────────────
-Write-Step "Setting up GlazeWM auto-start..."
+Write-Step "Setting up GlazeWM auto-start (elevated)..."
+# GlazeWM must run elevated, or Windows (UIPI) won't let it tile/control
+# the elevated apps launched from it (they'd float, and fullscreen would
+# get "stuck"). A scheduled task needs STORED CREDENTIALS to truly elevate
+# (an Interactive+Highest task silently runs unelevated). Since the
+# installer can't ask for a password mid-run, elevation is set up via
+# setup-admin-tasks.ps1, which prompts for credentials securely once.
 $startupDir = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
 $glazewmExe = "C:\Program Files\glzr.io\GlazeWM\glazewm.exe"
-if (Test-Path $glazewmExe) {
-    $shortcutPath = "$startupDir\GlazeWM.lnk"
-    if (-not (Test-Path $shortcutPath)) {
-        $shell = New-Object -ComObject WScript.Shell
-        $shortcut = $shell.CreateShortcut($shortcutPath)
-        $shortcut.TargetPath = $glazewmExe
-        $shortcut.WorkingDirectory = Split-Path $glazewmExe
-        $shortcut.Save()
-        Write-Ok "GlazeWM auto-start shortcut created"
-    } else {
-        Write-Ok "GlazeWM auto-start already configured"
-    }
+$glazewmTask = 'GlazeWM'
+
+# Remove any stale raw glazewm.exe placed in Startup (would run unelevated)
+Remove-Item "$startupDir\glazewm.exe" -Force -ErrorAction SilentlyContinue
+
+if (Test-Path "$SetupDir\setup-admin-tasks.ps1") {
+    Copy-Item "$SetupDir\setup-admin-tasks.ps1" "$env:USERPROFILE\setup-admin-tasks.ps1" -Force
+}
+
+$existing = Get-ScheduledTask -TaskName $glazewmTask -ErrorAction SilentlyContinue
+if ($existing -and $existing.Principal.LogonType -eq 'Password' -and $existing.Principal.RunLevel -eq 'Highest') {
+    Write-Ok "GlazeWM elevated task already configured"
 } else {
-    Write-Warn "GlazeWM exe not found at $glazewmExe - skipping startup setup"
+    Write-Warn "Elevated GlazeWM task not yet configured - run setup-admin-tasks.ps1 once to enable it (no UAC after that)."
 }
 
 # ─────────────────────────── Done ─────────────────────────────────
@@ -319,6 +375,7 @@ Write-Host "============================================" -ForegroundColor Magen
 Write-Host ""
 Write-Host "Installed:" -ForegroundColor White
 Write-Host "  - GlazeWM (tiling window manager)"
+Write-Host "  - glaze-autotiler (Dwindle tiling layout)"
 Write-Host "  - Zebar (status bar with wallpaper colors)"
 Write-Host "  - Alacritty (terminal)"
 Write-Host "  - oh-my-posh (prompt theme: night-owl)"

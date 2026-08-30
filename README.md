@@ -7,6 +7,7 @@ One-click Windows installer for a complete tiling WM desktop environment.
 | Component | Description |
 |-----------|-------------|
 | **GlazeWM** | Tiling window manager with custom keybindings |
+| **glaze-autotiler** | Adds the Dwindle (spiral) tiling layout to GlazeWM |
 | **Zebar** | Status bar (Magik Bar) with wallpaper-adaptive colors |
 | **Alacritty** | GPU-accelerated terminal with BlexMono Nerd Font |
 | **Brave** | Privacy-focused browser |

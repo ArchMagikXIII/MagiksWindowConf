@@ -2,6 +2,7 @@ general:
   startup_commands:
     - 'shell-exec powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\Users\Administrator\.glzr\zebar\odyssey-bar\watch-wallpaper.ps1"'
     - 'shell-exec zebar'
+    - 'shell-exec C:\Users\Administrator\.glzr\glaze-autotiler\glaze-autotiler.exe'
 
   # Commands to run just before the WM is shutdown.
   # Example: The below command kills Zebar.
@@ -264,10 +265,8 @@ keybindings:
   - commands: ['shell-exec powershell -ExecutionPolicy Bypass -WindowStyle Hidden -File "C:\\Users\\Administrator\\.glzr\\zebar\\cycle-theme.ps1"', 'wm-redraw']
     bindings: ['alt+shift+t']
 
-  # Launch CMD terminal. Alternatively, use `shell-exec wt` or
-  # `shell-exec %ProgramFiles%/Git/git-bash.exe` to start Windows
-  # Terminal and Git Bash respectively.
-  - commands: ['shell-exec C:\Program Files\Alacritty\alacritty.exe'] 
+  # Launch Alacritty terminal elevated (admin) via scheduled task - no UAC.
+  - commands: ['shell-exec schtasks /run /tn AlacrittyAdmin'] 
     bindings: ['alt+enter']
   - commands: ['shell-exec C:\Users\Administrator\AppData\Local\BraveSoftware\Brave-Browser\Application\brave.exe']
     bindings: ['alt+b']
