@@ -9,11 +9,16 @@ One-click Windows installer for a complete tiling WM desktop environment.
 | **GlazeWM** | Tiling window manager with custom keybindings |
 | **glaze-autotiler** | Adds the Dwindle (spiral) tiling layout to GlazeWM |
 | **Zebar** | Status bar (Magik Bar) with wallpaper-adaptive colors |
+| **Flow Launcher** | App launcher (Alt+Space) |
 | **Alacritty** | GPU-accelerated terminal with BlexMono Nerd Font |
 | **Brave** | Privacy-focused browser |
 | **oh-my-posh** | Prompt theme (night-owl) |
-| **fastfetch** | System info with custom ASCII art |
-| **PowerShell** | Profile with zoxide, PSFzf, Terminal-Icons |
+| **fastfetch** | System info with custom MagikOS ASCII art |
+| **fzf / zoxide** | Fuzzy finder + smart directory jumping |
+| **Discord / Steam** | Communication + gaming clients |
+
+GlazeWM and Zebar both start on login from the user's Startup folder (no
+scheduled tasks or stored credentials needed).
 
 ## Quick Start
 
@@ -33,6 +38,7 @@ Invoke-RestMethod https://github.com/ArchMagikXIII/MagiksWindowConf/archive/refs
 |---------|--------|
 | `Alt+Enter` | Alacritty terminal |
 | `Alt+B` | Brave browser |
+| `Alt+Space` | Flow Launcher |
 | `Alt+1-9` | Switch workspace |
 | `Alt+H/L` | Focus left/right |
 | `Alt+Shift+H/L` | Move window left/right |

@@ -1,4 +1,10 @@
 #Requires -RunAsAdministrator
+param(
+    # GPU software to install: 'none' (default), 'nvidia', 'amd', or 'both'.
+    # Omit entirely on machines that already have their GPU drivers installed.
+    [ValidateSet('none', 'nvidia', 'amd', 'both')]
+    [string]$GpuSoftware = 'none'
+)
 <#
 .SYNOPSIS
     MagikXIII Desktop Setup Installer
@@ -38,15 +44,20 @@ $packages = @(
     'gh',
     'oh-my-posh',
     'zoxide',
+    'fzf',
     'fastfetch',
     'alacritty',
     'brave',
     'glazewm',
     'zebar',
+    'flow-launcher',
+    'discord',
+    'steam',
     'neovim'
 )
 foreach ($pkg in $packages) {
-    if (choco list --local-only $pkg 2>$null | Select-String $pkg) {
+    # choco 2.x: `choco list` lists local packages by default (--local-only was removed)
+    if (choco list --exact $pkg 2>$null | Select-String $pkg) {
         Write-Ok "$pkg already installed"
     } else {
         Write-Host "   Installing $pkg..."
@@ -77,23 +88,23 @@ if (Test-Path $gaExe) {
 
 # ─────────────────────────── GPU Software ─────────────────────────
 Write-Step "GPU software (optional)..."
-Write-Host "   1) NVIDIA App"
-Write-Host "   2) AMD Adrenalin"
-Write-Host "   3) Both"
-Write-Host "   4) Skip"
-$gpuPkgs = @()
-switch (Read-Host "   Which GPU software do you want? (1-4, default 4)") {
-    '1' { $gpuPkgs = @('nvidia-app') }
-    '2' { $gpuPkgs = @('amd-software-adrenalin-edition') }
-    '3' { $gpuPkgs = @('nvidia-app', 'amd-software-adrenalin-edition') }
-    default { $gpuPkgs = @() }
+# Non-interactive by default (Read-Host hangs/fails in piped & non-console
+# sessions). Pass -GpuSoftware nvidia|amd|both to install in one shot.
+$gpuPkgs = switch ($GpuSoftware) {
+    'nvidia' { @('nvidia-app') }
+    'amd'    { @('amd-software-adrenalin-edition') }
+    'both'   { @('nvidia-app', 'amd-software-adrenalin-edition') }
+    default  { @() }
+}
+if (-not $gpuPkgs) {
+    Write-Host "   Skipping (installer was not asked to add GPU software)"
 }
 
 $amdDriversUrl = 'https://www.amd.com/en/support/download/drivers.html'
 $uaHeaders = @{ 'User-Agent' = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
 
 foreach ($pkg in $gpuPkgs) {
-    if (choco list --local-only $pkg 2>$null | Select-String $pkg) {
+    if (choco list --exact $pkg 2>$null | Select-String $pkg) {
         Write-Ok "$pkg already installed"
         continue
     }
@@ -171,10 +182,13 @@ Write-Step "Deploying configuration files..."
 $glazewmHome = "$env:USERPROFILE\.glzr\glazewm"
 New-Item -ItemType Directory -Path $glazewmHome -Force | Out-Null
 Copy-Item "$SetupDir\configs\glazewm\config.yaml" "$glazewmHome\config.yaml" -Force
-# Rewrite hardcoded paths to current user
+# Rewrite hardcoded paths to current user. Handles both plain backslashes and
+# YAML-escaped double backslashes (e.g. single-quoted strings like
+# "C:\\Users\\Administrator\\...").
 $glazewmConfig = Get-Content "$glazewmHome\config.yaml" -Raw -Encoding UTF8
-$escapedProfile = [regex]::Escape("C:\Users\Administrator")
-$glazewmConfig = $glazewmConfig -replace $escapedProfile, $env:USERPROFILE
+$glazewmConfig = $glazewmConfig -replace [regex]::Escape("C:\Users\Administrator"), $env:USERPROFILE
+$doubledProfile = $env:USERPROFILE.Replace('\', '\\')
+$glazewmConfig = $glazewmConfig -replace [regex]::Escape("C:\\Users\\Administrator"), $doubledProfile
 # Write without BOM (Out-File UTF8 adds BOM which GlazeWM can't parse)
 [System.IO.File]::WriteAllText("$glazewmHome\config.yaml", $glazewmConfig)
 Write-Ok "GlazeWM config deployed"
@@ -212,9 +226,6 @@ $alacrittyDir = "$env:APPDATA\alacritty"
 New-Item -ItemType Directory -Path $alacrittyDir -Force | Out-Null
 Copy-Item "$SetupDir\configs\alacritty\alacritty.toml" "$alacrittyDir\alacritty.toml" -Force
 Write-Ok "Alacritty config deployed"
-
-# NOTE: Elevated launch for Alacritty/GlazeWM is handled by setup-admin-tasks.ps1
-# (a scheduled task needs stored credentials to truly elevate - see below).
 
 # Fastfetch
 $ffDir = "$env:USERPROFILE\.config\fastfetch"
@@ -341,31 +352,52 @@ if (Test-Path $colorScript) {
     }
 }
 
-# ─────────────────────────── GlazeWM Startup ──────────────────────
-Write-Step "Setting up GlazeWM auto-start (elevated)..."
-# GlazeWM must run elevated, or Windows (UIPI) won't let it tile/control
-# the elevated apps launched from it (they'd float, and fullscreen would
-# get "stuck"). A scheduled task needs STORED CREDENTIALS to truly elevate
-# (an Interactive+Highest task silently runs unelevated). Since the
-# installer can't ask for a password mid-run, elevation is set up via
-# setup-admin-tasks.ps1, which prompts for credentials securely once.
+# ─────────────────────────── Startup (GlazeWM + Zebar) ────────────
+Write-Step "Setting up GlazeWM + Zebar auto-start..."
+# Both apps launch at logon from the user Startup folder. GlazeWM does NOT
+# need the old stored-credentials scheduled task: it runs unelevated here and
+# tiles everything else at the same (normal) integrity level. If you DO want
+# elevated apps, GlazeWM must run elevated too - register it via Task
+# Scheduler manually with stored credentials instead of using this shortcut.
 $startupDir = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
-$glazewmExe = "C:\Program Files\glzr.io\GlazeWM\glazewm.exe"
-$glazewmTask = 'GlazeWM'
+$ws = New-Object -ComObject WScript.Shell
+$startupApps = @(
+    @{ Name = 'GlazeWM'; Exe = 'C:\Program Files\glzr.io\GlazeWM\glazewm.exe' },
+    @{ Name = 'Zebar';   Exe = '' }
+)
 
-# Remove any stale raw glazewm.exe placed in Startup (would run unelevated)
-Remove-Item "$startupDir\glazewm.exe" -Force -ErrorAction SilentlyContinue
+foreach ($app in $startupApps) {
+    $shortcutPath = "$startupDir\$($app.Name).lnk"
 
-if (Test-Path "$SetupDir\setup-admin-tasks.ps1") {
-    Copy-Item "$SetupDir\setup-admin-tasks.ps1" "$env:USERPROFILE\setup-admin-tasks.ps1" -Force
+    $exe = $app.Exe
+    if (-not $exe) {
+        $exe = @(
+            "$env:LOCALAPPDATA\Programs\$($app.Name)\$($app.Name).exe",
+            "C:\Program Files\glzr.io\$($app.Name)\$($app.Name).exe"
+        ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    }
+
+    if (-not $exe -or -not (Test-Path -LiteralPath $exe)) {
+        Write-Warn "Could not locate $($app.Name) - add it to Startup manually"
+        continue
+    }
+
+    if (Test-Path -LiteralPath $shortcutPath) {
+        Write-Ok "$($app.Name) auto-start already configured"
+    } else {
+        $shortcut = $ws.CreateShortcut($shortcutPath)
+        $shortcut.TargetPath = $exe
+        $shortcut.WorkingDirectory = Split-Path $exe
+        $shortcut.WindowStyle = 1
+        $shortcut.Save()
+        Write-Ok "$($app.Name) added to Startup folder"
+    }
 }
 
-$existing = Get-ScheduledTask -TaskName $glazewmTask -ErrorAction SilentlyContinue
-if ($existing -and $existing.Principal.LogonType -eq 'Password' -and $existing.Principal.RunLevel -eq 'Highest') {
-    Write-Ok "GlazeWM elevated task already configured"
-} else {
-    Write-Warn "Elevated GlazeWM task not yet configured - run setup-admin-tasks.ps1 once to enable it (no UAC after that)."
-}
+# Clean up the old elevation approach (no longer used by this installer).
+# Alacritty also launches directly now (see glazewm config), so the on-demand
+# elevated task is gone too.
+Remove-Item "$env:USERPROFILE\setup-admin-tasks.ps1" -Force -ErrorAction SilentlyContinue
 
 # ─────────────────────────── Done ─────────────────────────────────
 Write-Host "`n" -NoNewline
@@ -377,21 +409,27 @@ Write-Host "Installed:" -ForegroundColor White
 Write-Host "  - GlazeWM (tiling window manager)"
 Write-Host "  - glaze-autotiler (Dwindle tiling layout)"
 Write-Host "  - Zebar (status bar with wallpaper colors)"
+Write-Host "  - Flow Launcher (app launcher)"
 Write-Host "  - Alacritty (terminal)"
 Write-Host "  - oh-my-posh (prompt theme: night-owl)"
-Write-Host "  - fastfetch (system info)"
+Write-Host "  - fzf + zoxide + PSFzf (PowerShell profile)"
+Write-Host "  - fastfetch (system info, MagikOS ASCII art)"
+Write-Host "  - Discord, Steam, Brave"
 Write-Host "  - Neovim (editor)"
 Write-Host "  - JetBrains Mono + BlexMono Nerd Fonts"
-Write-Host "  - PowerShell profile (zoxide, PSFzf, icons)"
+Write-Host ""
+Write-Host "Auto-start on login:" -ForegroundColor Yellow
+Write-Host "  - GlazeWM + Zebar (Startup folder)"
 Write-Host ""
 Write-Host "Next steps:" -ForegroundColor Yellow
 Write-Host "  1. Log out and back in (for PATH changes)"
-Write-Host "  2. GlazeWM will auto-start on next login"
-Write-Host "  3. Or launch it manually: glazewm"
+Write-Host "  2. GlazeWM + Zebar will auto-start on next login"
+Write-Host "  3. Or launch them manually: glazewm, zebar"
 Write-Host ""
 Write-Host "Key bindings:" -ForegroundColor Yellow
 Write-Host "  Alt+Enter  = Alacritty terminal"
 Write-Host "  Alt+B      = Brave browser"
+Write-Host "  Alt+Space  = Flow Launcher"
 Write-Host "  Alt+1-9    = Switch workspace"
 Write-Host "  Alt+R      = Resize mode"
 Write-Host "  Alt+Shift+E = Exit GlazeWM"
