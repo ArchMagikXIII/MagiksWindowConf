@@ -1,6 +1,7 @@
 # zebar-startup.ps1
 # Runs wallpaper color extraction + GPU detection, then launches Zebar.
-# GlazeWM runs this as a single shell-exec so everything completes before Zebar starts.
+# The Windows Startup-folder shortcut runs this script (see install.ps1),
+# so colors are ready before the bar first draws.
 
 $ErrorActionPreference = 'SilentlyContinue'
 

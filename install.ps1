@@ -57,12 +57,16 @@ $packages = @(
 )
 foreach ($pkg in $packages) {
     # choco 2.x: `choco list` lists local packages by default (--local-only was removed)
-    if (choco list --exact $pkg 2>$null | Select-String $pkg) {
+    if (choco list --exact $pkg 2>$null | Select-String $pkg -SimpleMatch) {
         Write-Ok "$pkg already installed"
     } else {
         Write-Host "   Installing $pkg..."
         choco install $pkg -y --no-progress
-        Write-Ok "$pkg installed"
+        if ($LASTEXITCODE -eq 0) {
+            Write-Ok "$pkg installed"
+        } else {
+            Write-Warn "$pkg install failed (exit code $LASTEXITCODE)"
+        }
     }
 }
 
@@ -104,7 +108,7 @@ $amdDriversUrl = 'https://www.amd.com/en/support/download/drivers.html'
 $uaHeaders = @{ 'User-Agent' = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' }
 
 foreach ($pkg in $gpuPkgs) {
-    if (choco list --exact $pkg 2>$null | Select-String $pkg) {
+    if (choco list --exact $pkg 2>$null | Select-String $pkg -SimpleMatch) {
         Write-Ok "$pkg already installed"
         continue
     }
@@ -150,6 +154,7 @@ $fonts = Get-ChildItem "$SetupDir\fonts\*.ttf" -ErrorAction SilentlyContinue
 $fontDestUser = "$env:LOCALAPPDATA\Microsoft\Windows\Fonts"
 $fontDestSystem = "C:\Windows\Fonts"
 New-Item -ItemType Directory -Path $fontDestUser -Force | Out-Null
+Add-Type -AssemblyName System.Drawing
 
 foreach ($font in $fonts) {
     $destUser = Join-Path $fontDestUser $font.Name
@@ -158,10 +163,13 @@ foreach ($font in $fonts) {
         # Copy to user fonts folder
         Copy-Item $font.FullName $destUser -Force
         # Get the actual font family name from the TTF
-        Add-Type -AssemblyName System.Drawing
         $fc = New-Object System.Drawing.Text.PrivateFontCollection
-        $fc.AddFontFile($font.FullName)
-        $fontFamily = $fc.Families[0].Name
+        try {
+            $fc.AddFontFile($font.FullName)
+            $fontFamily = $fc.Families[0].Name
+        } finally {
+            $fc.Dispose()
+        }
         # Register in HKCU for user
         $regPath = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"
         New-ItemProperty -Path $regPath -Name "$fontFamily (TrueType)" -Value $font.Name -PropertyType String -Force | Out-Null
@@ -205,8 +213,9 @@ $themesDir = "$zebarHome\themes"
 New-Item -ItemType Directory -Path $themesDir -Force | Out-Null
 if (Test-Path "$SetupDir\configs\zebar\themes") {
     Copy-Item "$SetupDir\configs\zebar\themes\*" "$themesDir\" -Force
-    Copy-Item "$SetupDir\configs\zebar\cycle-theme.ps1" "$zebarHome\cycle-theme.ps1" -Force
 }
+# cycle-theme.ps1 (Alt+Shift+T) must always ship, not just when themes exist.
+Copy-Item "$SetupDir\configs\zebar\cycle-theme.ps1" "$zebarHome\cycle-theme.ps1" -Force
 Copy-Item "$SetupDir\configs\zebar\zebar-startup.ps1" "$zebarHome\zebar-startup.ps1" -Force
 Write-Ok "Zebar config + Magik Bar deployed"
 
@@ -361,9 +370,20 @@ Write-Step "Setting up GlazeWM + Zebar auto-start..."
 # Scheduler manually with stored credentials instead of using this shortcut.
 $startupDir = "$env:APPDATA\Microsoft\Windows\Start Menu\Programs\Startup"
 $ws = New-Object -ComObject WScript.Shell
+$zebarStartupScript = "$zebarHome\zebar-startup.ps1"
 $startupApps = @(
-    @{ Name = 'GlazeWM'; Exe = 'C:\Program Files\glzr.io\GlazeWM\glazewm.exe' },
-    @{ Name = 'Zebar';   Exe = '' }
+    @{
+        Name = 'GlazeWM'
+        Exe  = 'C:\Program Files\glzr.io\GlazeWM\glazewm.exe'
+        Args = ''
+    },
+    @{
+        # Runs zebar-startup.ps1 so wallpaper colors are extracted before the
+        # bar draws, then the script launches zebar.exe.
+        Name = 'Zebar'
+        Exe  = "$env:SystemRoot\System32\WindowsPowerShell\v1.0\powershell.exe"
+        Args = "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$zebarStartupScript`""
+    }
 )
 
 foreach ($app in $startupApps) {
@@ -382,16 +402,14 @@ foreach ($app in $startupApps) {
         continue
     }
 
-    if (Test-Path -LiteralPath $shortcutPath) {
-        Write-Ok "$($app.Name) auto-start already configured"
-    } else {
-        $shortcut = $ws.CreateShortcut($shortcutPath)
-        $shortcut.TargetPath = $exe
-        $shortcut.WorkingDirectory = Split-Path $exe
-        $shortcut.WindowStyle = 1
-        $shortcut.Save()
-        Write-Ok "$($app.Name) added to Startup folder"
-    }
+    # (Re)write every run so shortcut targets track config changes.
+    $shortcut = $ws.CreateShortcut($shortcutPath)
+    $shortcut.TargetPath = $exe
+    $shortcut.Arguments = $app.Args
+    $shortcut.WorkingDirectory = Split-Path $exe
+    $shortcut.WindowStyle = 1
+    $shortcut.Save()
+    Write-Ok "$($app.Name) added to Startup folder"
 }
 
 # Clean up the old elevation approach (no longer used by this installer).
